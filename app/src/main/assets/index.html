@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AutoDrive OS — Head Unit & OBD-II</title>
+<style>
+  :root {
+    --bg-dark: #06090F;
+    --panel-bg: #0D131F;
+    --panel-border: #1C273D;
+    --accent: #00E5FF;
+    --accent-glow: rgba(0, 229, 255, 0.25);
+    --warn: #FF9100;
+    --danger: #FF1744;
+    --ok: #00E676;
+    --text-main: #F0F4F8;
+    --text-muted: #7B8FA6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top Status Bar */
+  .topbar {
+    height: 46px;
+    background: #090E17;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .brand { font-weight: 800; font-size: 16px; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .status-pills { display: flex; align-items: center; gap: 10px; }
+  .pill {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .dot.online { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .clock { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: #fff; }
+
+  /* Main Workspace */
+  .workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Left Navigation Dock */
+  .nav-dock {
+    width: 78px;
+    background: #080C14;
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 8px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    border-radius: 14px;
+    padding: 12px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .nav-btn.active {
+    background: rgba(0, 229, 255, 0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .nav-icon { font-size: 20px; }
+
+  /* Content Screens */
+  .screen {
+    flex: 1;
+    display: none;
+    padding: 12px;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* Split Dashboard Layout */
+  .left-telemetry {
+    flex: 1.25;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .right-media {
+    flex: 1;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Gauges Row */
+  .gauges-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1.35;
+  }
+  .gauge-card {
+    background: radial-gradient(circle at center, #111A2B 0%, #0A0F1A 100%);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+  }
+  .gauge-title { position: absolute; top: 10px; left: 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; }
+  .gauge-val { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; color: #fff; text-shadow: 0 0 16px var(--accent-glow); }
+  .gauge-unit { font-size: 12px; color: var(--accent); font-weight: 700; margin-top: 4px; }
+  .bar-track { width: 85%; height: 10px; background: #162033; border-radius: 6px; overflow: hidden; margin-top: 12px; }
+  .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00E5FF, #00E676, #FF9100, #FF1744); transition: width 0.12s linear; }
+
+  /* Odometer & Trip Strip */
+  .odo-strip {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    align-items: center;
+  }
+  .odo-item { display: flex; flex-direction: column; }
+  .odo-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+  .odo-num { font-size: 16px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  /* Sensors Grid (Coolant, Battery, Throttle, Load, IAT, MAP) */
+  .sensors-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    flex: 1;
+  }
+  .sensor-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .s-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .s-val { font-size: 20px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .s-sub { font-size: 10px; color: var(--ok); }
+
+  /* Simulator Bar */
+  .sim-bar {
+    background: #0B1220;
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .btn {
+    background: #162238;
+    border: 1px solid #263859;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn.danger { background: rgba(255, 23, 68, 0.2); border-color: var(--danger); color: #FF5252; }
+  input[type=range] { flex: 1; accent-color: var(--accent); height: 24px; }
+
+  /* Media Tabs & Player */
+  .media-tabs {
+    display: flex;
+    background: #080D17;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .m-tab {
+    flex: 1;
+    padding: 11px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .m-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,229,255,0.06); }
+  .media-body { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 8px; overflow: hidden; }
+  .yt-input-row { display: flex; gap: 6px; }
+  .yt-input {
+    flex: 1;
+    background: #06090F;
+    border: 1px solid var(--panel-border);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .player-frame {
+    flex: 1;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  iframe, video { width: 100%; height: 100%; border: none; object-fit: contain; }
+  .quick-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .chip {
+    background: #141E30;
+    border: 1px solid #223250;
+    color: #CBD5E1;
+    padding: 5px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  /* Modal Bluetooth & DTC */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-card {
+    background: #0E1525;
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    width: 520px;
+    max-width: 92vw;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .dev-list { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .dev-item {
+    background: #152036;
+    padding: 10px 12px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">⚡ AUTODRIVE OS <span style="font-size:11px;color:#7B8FA6;font-weight:600;">HEAD UNIT OBD-II</span></div>
+    <div class="status-pills">
+      <div class="pill" onclick="openBtModal()">
+        <span class="dot" id="obdDot"></span>
+        <span id="obdStatusText">OBD: SIMULASI (KLIK KONEK BT)</span>
+      </div>
+      <div class="pill" onclick="openDtcModal()">🛠️ DTC SCAN</div>
+      <div class="clock" id="clockDisplay">20:45</div>
+    </div>
+  </div>
+
+  <!-- Main Workspace -->
+  <div class="workspace">
+    <!-- Left Nav Dock -->
+    <div class="nav-dock">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="nav-btn active" onclick="switchScreen('dash', this)"><span class="nav-icon">🏎️</span>COCKPIT</button>
+        <button class="nav-btn" onclick="switchScreen('allpids', this)"><span class="nav-icon">📊</span>SEMUA PID</button>
+        <button class="nav-btn" onclick="switchScreen('mediafull', this)"><span class="nav-icon">🎬</span>HIBURAN</button>
+      </div>
+      <button class="nav-btn" onclick="resetTrip()"><span class="nav-icon">🔄</span>RESET TRIP</button>
+    </div>
+
+    <!-- SCREEN 1: MAIN COCKPIT (OBD + MEDIA SPLIT) -->
+    <div class="screen active" id="screen-dash">
+      <div class="left-telemetry">
+        <!-- Speed & RPM -->
+        <div class="gauges-row">
+          <div class="gauge-card">
+            <span class="gauge-title">SPEEDOMETER (PID 010D)</span>
+            <div class="gauge-val" id="valSpeed">0</div>
+            <div class="gauge-unit">KM / H</div>
+            <div class="bar-track"><div class="bar-fill" id="barSpeed"></div></div>
+          </div>
+          <div class="gauge-card">
+            <span class="gauge-title">TACHOMETER (PID 010C)</span>
+            <div class="gauge-val" id="valRpm">820</div>
+            <div class="gauge-unit">RPM</div>
+            <div class="bar-track"><div class="bar-fill" id="barRpm"></div></div>
+          </div>
+        </div>
+
+        <!-- Odometer & Fuel -->
+        <div class="odo-strip">
+          <div class="odo-item">
+            <span class="odo-lbl">TOTAL ODOMETER</span>
+            <span class="odo-num" id="valOdo">124,580.4 km</span>
+          </div>
+          <div class="odo-item">
+            <span class="odo-lbl">TRIP JARAK</span>
+            <span class="odo-num" id="valTrip">18.4 km</span>
+          </div>
+          <div class="odo-item">
+            <span class="odo-lbl">KONSUMSI BBM</span>
+            <span class="odo-num" id="valFuelEco">14.2 km/L</span>
+          </div>
+          <div class="odo-item">
+            <span class="odo-lbl">SISA TANGKI (012F)</span>
+            <span class="odo-num" id="valFuelLvl">72 %</span>
+          </div>
+        </div>
+
+        <!-- 8 Key OBD-II Sensors -->
+        <div class="sensors-grid">
+          <div class="sensor-box">
+            <div class="s-head"><span>SUHU MESIN</span><span>0105</span></div>
+            <div class="s-val" id="valCoolant">88 °C</div>
+            <div class="s-sub" id="statusCoolant">NORMAL</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>TEGANGAN AKI</span><span>0142</span></div>
+            <div class="s-val" id="valVolt">14.1 V</div>
+            <div class="s-sub" id="statusVolt">CHARGING OK</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>THROTTLE</span><span>0111</span></div>
+            <div class="s-val" id="valThrottle">14 %</div>
+            <div class="s-sub">TPS SENSOR</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>ENGINE LOAD</span><span>0104</span></div>
+            <div class="s-val" id="valLoad">26 %</div>
+            <div class="s-sub">CALCULATED</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>INTAKE AIR</span><span>010F</span></div>
+            <div class="s-val" id="valIat">34 °C</div>
+            <div class="s-sub">IAT SENSOR</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>INTAKE MAP</span><span>010B</span></div>
+            <div class="s-val" id="valMap">33 kPa</div>
+            <div class="s-sub">VACUUM</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>TIMING ADV</span><span>010E</span></div>
+            <div class="s-val" id="valTiming">11.5°</div>
+            <div class="s-sub">IGNITION</div>
+          </div>
+          <div class="sensor-box">
+            <div class="s-head"><span>SHORT FUEL TRIM</span><span>0106</span></div>
+            <div class="s-val" id="valStft">+1.5 %</div>
+            <div class="s-sub">BANK 1</div>
+          </div>
+        </div>
+
+        <!-- Interactive Simulator Controls (Active when BT not connected) -->
+        <div class="sim-bar" id="simBar">
+          <button class="btn primary" id="btnEngine" onclick="toggleEngine()">⚡ MESIN: ON</button>
+          <span style="font-size:11px;color:#7B8FA6;font-weight:700;">GAS SIMULASI:</span>
+          <input type="range" id="gasPedal" min="0" max="100" value="0" oninput="onGasInput(this.value)">
+          <button class="btn" onclick="setCruise()">CRUISE 80</button>
+        </div>
+      </div>
+
+      <!-- Right Side: Integrated YouTube / Music / Video Player -->
+      <div class="right-media" id="mediaContainer">
+        <div class="media-tabs">
+          <div class="m-tab active" onclick="switchMediaTab('yt', this)">▶️ YOUTUBE</div>
+          <div class="m-tab" onclick="switchMediaTab('music', this)">🎵 MUSIK LOKAL</div>
+          <div class="m-tab" onclick="switchMediaTab('video', this)">🎞️ VIDEO MP4</div>
+        </div>
+
+        <!-- YouTube Tab -->
+        <div class="media-body" id="tab-yt">
+          <div class="yt-input-row">
+            <input type="text" class="yt-input" id="ytUrlInput" placeholder="Tempel Link YouTube / ID Video...">
+            <button class="btn primary" onclick="loadYoutube()">PUTAR</button>
+          </div>
+          <div class="quick-chips">
+            <span class="chip" onclick="playYtId('jfKfPfyJRdk')">🎧 Lofi Radio 24/7</span>
+            <span class="chip" onclick="playYtId('4xDzrJKXOOY')">🌃 Synthwave Night Drive</span>
+            <span class="chip" onclick="playYtId('5qap5aO4i9A')">🚗 Chill Car Mix</span>
+          </div>
+          <div class="player-frame">
+            <iframe id="ytFrame" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          </div>
+        </div>
+
+        <!-- Local Music Tab -->
+        <div class="media-body" id="tab-music" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:700;" id="musicTitle">Pilih File MP3 / Audio Headunit</span>
+            <label class="btn primary" style="cursor:pointer;">
+              📂 BUKA MP3
+              <input type="file" accept="audio/*" multiple style="display:none;" onchange="loadLocalAudio(this.files)">
+            </label>
+          </div>
+          <audio id="audioPlayer" controls style="width:100%;margin-top:6px;"></audio>
+          <div id="audioPlaylist" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-top:6px;"></div>
+        </div>
+
+        <!-- Local Video Tab -->
+        <div class="media-body" id="tab-video" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:700;" id="videoTitle">Pemutar Video MP4 / MKV</span>
+            <label class="btn primary" style="cursor:pointer;">
+              📂 BUKA VIDEO
+              <input type="file" accept="video/*" style="display:none;" onchange="loadLocalVideo(this.files)">
+            </label>
+          </div>
+          <div class="player-frame">
+            <video id="videoPlayer" controls playsinline></video>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: ALL OBD-II PIDS TABLE -->
+    <div class="screen" id="screen-allpids" style="flex-direction:column;overflow-y:auto;">
+      <h3 style="color:var(--accent);font-size:15px;">DAFTAR LENGKAP PARAMETER TELEMETRI OBD-II (MODE 01 LIVE DATA)</h3>
+      <div class="sensors-grid" style="grid-template-columns:repeat(4,1fr);flex:unset;" id="allPidsGrid"></div>
+    </div>
+
+    <!-- SCREEN 3: FULLSCREEN MEDIA MODE -->
+    <div class="screen" id="screen-mediafull" style="flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-bg);padding:8px 14px;border-radius:12px;border:1px solid var(--panel-border);">
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">MINI TELEMETRI: <span id="miniSpeed" style="color:#fff;">0 km/h</span> | <span id="miniRpm" style="color:#fff;">820 RPM</span> | <span id="miniCoolant" style="color:#00E676;">88°C</span> | <span id="miniVolt" style="color:#00E676;">14.1V</span></span>
+        <button class="btn primary" onclick="switchScreen('dash', document.querySelector('.nav-btn'))">KEMBALI KE COCKPIT</button>
+      </div>
+      <div id="fullMediaSlot" style="flex:1;display:flex;"></div>
+    </div>
+  </div>
+
+  <!-- Bluetooth ELM327 Modal -->
+  <div class="modal-backdrop" id="btModal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="color:var(--accent);font-size:16px;">🔌 KONEKSI ADAPTER OBD-II (ELM327)</h3>
+        <button class="btn danger" onclick="closeBtModal()">TUTUP</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);">Pastikan Bluetooth Headunit aktif dan sudah <b>Pair (Sandingkan)</b> dengan <b>OBDII / ELM327</b> (PIN biasanya 1234 atau 0000) di Pengaturan Android.</p>
+      <div class="dev-list" id="btDeviceList">
+        <div style="font-size:12px;color:#7B8FA6;">Memuat perangkat Bluetooth...</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" onclick="disconnectBt()">PUTUSKAN & PAKAI SIMULASI</button>
+        <button class="btn primary" onclick="refreshBtDevices()">🔄 SCAN ULANG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DTC Diagnostic Modal -->
+  <div class="modal-backdrop" id="dtcModal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="color:var(--warn);font-size:16px;">🛠️ DIAGNOSTIK CHECK ENGINE (DTC MODE 03 / 04)</h3>
+        <button class="btn danger" onclick="closeDtcModal()">TUTUP</button>
+      </div>
+      <div id="dtcResultBox" style="background:#06090F;padding:12px;border-radius:10px;border:1px solid var(--panel-border);font-size:13px;min-height:80px;">
+        Klik "SCAN KODE ERROR" untuk membaca ECU mobil.
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn danger" onclick="clearDtc()">🗑️ HAPUS DTC (RESET MIL)</button>
+        <button class="btn primary" onclick="scanDtc()">🔍 SCAN KODE ERROR</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // State Telemetry
+  const state = {
+    isRealObd: false,
+    engineOn: true,
+    gas: 0,
+    speed: 0,
+    rpm: 820,
+    coolant: 88,
+    volt: 14.1,
+    throttle: 14,
+    load: 26,
+    iat: 34,
+    map: 33,
+    timing: 11.5,
+    stft: 1.5,
+    ltft: 0.8,
+    fuelLvl: 72,
+    odo: 124580.4,
+    trip: 18.4
+  };
+
+  // Clock
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('clockDisplay').textContent =
+      now.toTimeString().slice(0, 5);
+  }, 1000);
+
+  // Navigation Screen Switcher
+  function switchScreen(name, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+
+    const mediaBox = document.getElementById('mediaContainer');
+    if (name === 'mediafull') {
+      document.getElementById('fullMediaSlot').appendChild(mediaBox);
+    } else if (name === 'dash') {
+      document.getElementById('screen-dash').appendChild(mediaBox);
+    }
+    if (name === 'allpids') renderAllPids();
+  }
+
+  function switchMediaTab(tab, el) {
+    document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['yt', 'music', 'video'].forEach(id => {
+      document.getElementById('tab-' + id).style.display = (id === tab) ? 'flex' : 'none';
+    });
+  }
+
+  // YouTube Player
+  function extractYtId(url) {
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regExp);
+    return match ? match[1] : url.trim();
+  }
+  function loadYoutube() {
+    const val = document.getElementById('ytUrlInput').value;
+    if (!val) return;
+    playYtId(extractYtId(val));
+  }
+  function playYtId(id) {
+    document.getElementById('ytFrame').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+  }
+
+  // Local Audio Player
+  function loadLocalAudio(files) {
+    if (!files || files.length === 0) return;
+    const list = document.getElementById('audioPlaylist');
+    const player = document.getElementById('audioPlayer');
+    list.innerHTML = '';
+    Array.from(files).forEach((file, idx) => {
+      const item = document.createElement('div');
+      item.className = 'dev-item';
+      item.style.padding = '7px 10px';
+      item.style.fontSize = '12px';
+      item.textContent = '🎵 ' + file.name;
+      item.onclick = () => {
+        player.src = URL.createObjectURL(file);
+        player.play();
+        document.getElementById('musicTitle').textContent = file.name;
+      };
+      list.appendChild(item);
+      if (idx === 0) item.click();
+    });
+  }
+
+  // Local Video Player
+  function loadLocalVideo(files) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const vp = document.getElementById('videoPlayer');
+    vp.src = URL.createObjectURL(file);
+    vp.play();
+    document.getElementById('videoTitle').textContent = file.name;
+  }
+
+  // Simulator Physics Loop (runs only when real OBD-II is not connected)
+  function toggleEngine() {
+    state.engineOn = !state.engineOn;
+    document.getElementById('btnEngine').textContent = state.engineOn ? '⚡ MESIN: ON' : '⭕ MESIN: ACC';
+    if (!state.engineOn) {
+      state.gas = 0;
+      document.getElementById('gasPedal').value = 0;
+    }
+  }
+  function onGasInput(v) { state.gas = Number(v); }
+  function setCruise() { state.engineOn = true; state.gas = 52; document.getElementById('gasPedal').value = 52; }
+  function resetTrip() { state.trip = 0; }
+
+  setInterval(() => {
+    if (!state.isRealObd) {
+      if (!state.engineOn) {
+        state.rpm += (0 - state.rpm) * 0.25;
+        state.speed += (0 - state.speed) * 0.12;
+        state.volt += (12.4 - state.volt) * 0.1;
+        state.throttle = 0;
+        state.load = 0;
+      } else {
+        const targetRpm = 800 + state.gas * 54;
+        const targetSpeed = state.gas * 1.55;
+        state.rpm += (targetRpm - state.rpm) * 0.18 + (Math.random() * 14 - 7);
+        state.speed += (targetSpeed - state.speed) * 0.08;
+        state.volt += ((state.rpm > 1000 ? 14.2 : 13.9) - state.volt) * 0.1;
+        state.throttle = Math.round(12 + state.gas * 0.85);
+        state.load = Math.round(22 + state.gas * 0.72);
+        state.map = Math.round(30 + state.gas * 0.68);
+        state.timing = (10 + state.gas * 0.22).toFixed(1);
+        state.coolant += ((88 + state.gas * 0.08) - state.coolant) * 0.02;
+      }
+    }
+
+    // Distance integration (km)
+    const dtHours = 0.15 / 3600;
+    const dist = Math.max(0, state.speed) * dtHours;
+    state.odo += dist;
+    state.trip += dist;
+
+    updateUI();
+  }, 150);
+
+  function updateUI() {
+    const spd = Math.max(0, Math.round(state.speed));
+    const rpm = Math.max(0, Math.round(state.rpm));
+    const cool = Math.round(state.coolant);
+    const volt = Number(state.volt).toFixed(1);
+
+    document.getElementById('valSpeed').textContent = spd;
+    document.getElementById('barSpeed').style.width = Math.min(100, (spd / 220) * 100) + '%';
+
+    document.getElementById('valRpm').textContent = rpm;
+    document.getElementById('barRpm').style.width = Math.min(100, (rpm / 7500) * 100) + '%';
+
+    document.getElementById('valOdo').textContent = state.odo.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + ' km';
+    document.getElementById('valTrip').textContent = state.trip.toFixed(1) + ' km';
+    document.getElementById('valCoolant').textContent = cool + ' °C';
+    document.getElementById('valVolt').textContent = volt + ' V';
+    document.getElementById('valThrottle').textContent = state.throttle + ' %';
+    document.getElementById('valLoad').textContent = state.load + ' %';
+    document.getElementById('valIat').textContent = state.iat + ' °C';
+    document.getElementById('valMap').textContent = state.map + ' kPa';
+    document.getElementById('valTiming').textContent = state.timing + '°';
+    document.getElementById('valFuelLvl').textContent = state.fuelLvl + ' %';
+
+    // Mini Telemetry in Full Media Mode
+    document.getElementById('miniSpeed').textContent = spd + ' km/h';
+    document.getElementById('miniRpm').textContent = rpm + ' RPM';
+    document.getElementById('miniCoolant').textContent = cool + '°C';
+    document.getElementById('miniVolt').textContent = volt + 'V';
+
+    // Alerts
+    const cStatus = document.getElementById('statusCoolant');
+    if (cool > 103) { cStatus.textContent = 'OVERHEAT!'; cStatus.style.color = '#FF1744'; }
+    else { cStatus.textContent = 'NORMAL'; cStatus.style.color = '#00E676'; }
+
+    const vStatus = document.getElementById('statusVolt');
+    if (state.volt < 12.0) { vStatus.textContent = 'AKI LEMAH'; vStatus.style.color = '#FF1744'; }
+    else { vStatus.textContent = 'CHARGING OK'; vStatus.style.color = '#00E676'; }
+  }
+
+  function renderAllPids() {
+    const items = [
+      ['010C', 'Engine RPM', Math.round(state.rpm) + ' RPM'],
+      ['010D', 'Vehicle Speed', Math.round(state.speed) + ' km/h'],
+      ['0105', 'Coolant Temp', Math.round(state.coolant) + ' °C'],
+      ['0142', 'Control Module Voltage', Number(state.volt).toFixed(1) + ' V'],
+      ['0111', 'Throttle Position', state.throttle + ' %'],
+      ['0104', 'Calculated Engine Load', state.load + ' %'],
+      ['010F', 'Intake Air Temp (IAT)', state.iat + ' °C'],
+      ['010B', 'Intake Manifold Pressure', state.map + ' kPa'],
+      ['010E', 'Timing Advance', state.timing + ' °'],
+      ['0106', 'Short Term Fuel Trim B1', '+' + state.stft + ' %'],
+      ['0107', 'Long Term Fuel Trim B1', '+' + state.ltft + ' %'],
+      ['012F', 'Fuel Tank Level Input', state.fuelLvl + ' %']
+    ];
+    document.getElementById('allPidsGrid').innerHTML = items.map(i => `
+      <div class="sensor-box">
+        <div class="s-head"><span>${i[1]}</span><span>${i[0]}</span></div>
+        <div class="s-val">${i[2]}</div>
+        <div class="s-sub">SAE J1979 STANDARD</div>
+      </div>
+    `).join('');
+  }
+
+  // Android Native Bridge Handlers (Bluetooth ELM327)
+  function openBtModal() {
+    document.getElementById('btModal').classList.add('open');
+    refreshBtDevices();
+  }
+  function closeBtModal() { document.getElementById('btModal').classList.remove('open'); }
+
+  function refreshBtDevices() {
+    const list = document.getElementById('btDeviceList');
+    if (window.AndroidOBD) {
+      const raw = window.AndroidOBD.getPairedDevices();
+      const devices = JSON.parse(raw || '[]');
+      if (devices.length === 0) {
+        list.innerHTML = '<div style="font-size:12px;color:#FF9100;">Tidak ada perangkat Bluetooth ter-pair. Silakan pair ELM327 di pengaturan Bluetooth Android terlebih dahulu.</div>';
+        return;
+      }
+      list.innerHTML = devices.map(d => `
+        <div class="dev-item" onclick="connectBtDevice('${d.address}')">
+          <div>
+            <div style="font-weight:700;font-size:13px;">${d.name}</div>
+            <div style="font-size:11px;color:#7B8FA6;">${d.address}</div>
+          </div>
+          <span class="btn primary">HUBUNGKAN</span>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = '<div style="font-size:12px;color:#7B8FA6;">Mode Browser Preview terdeteksi. Saat dijalankan sebagai APK di Headunit Android, daftar Bluetooth ELM327 otomatis muncul di sini.</div>';
+    }
+  }
+
+  function connectBtDevice(mac) {
+    document.getElementById('obdStatusText').textContent = 'MENGHUBUNGKAN...';
+    closeBtModal();
+    if (window.AndroidOBD) window.AndroidOBD.connectDevice(mac);
+  }
+
+  function disconnectBt() {
+    if (window.AndroidOBD) window.AndroidOBD.disconnect();
+    state.isRealObd = false;
+    document.getElementById('obdDot').classList.remove('online');
+    document.getElementById('obdStatusText').textContent = 'OBD: SIMULASI';
+    document.getElementById('simBar').style.display = 'flex';
+    closeBtModal();
+  }
+
+  window.onObdConnected = function(name) {
+    state.isRealObd = true;
+    document.getElementById('obdDot').classList.add('online');
+    document.getElementById('obdStatusText').textContent = 'OBD TERHUBUNG: ' + name;
+    document.getElementById('simBar').style.display = 'none';
+  };
+
+  window.onObdDisconnected = function() {
+    state.isRealObd = false;
+    document.getElementById('obdDot').classList.remove('online');
+    document.getElementById('obdStatusText').textContent = 'OBD TERPUTUS (SIMULASI)';
+    document.getElementById('simBar').style.display = 'flex';
+  };
+
+  window.onObdError = function(msg) {
+    state.isRealObd = false;
+    document.getElementById('obdDot').classList.remove('online');
+    document.getElementById('obdStatusText').textContent = 'OBD ERROR: ' + msg;
+    document.getElementById('simBar').style.display = 'flex';
+  };
+
+  // Parse Real Hexadecimal ELM327 Responses
+  window.onObdPidData = function(payload) {
+    const parts = payload.split('|');
+    if (parts.length < 2) return;
+    const pid = parts[0];
+    const hex = parts[1].replace(/\s+/g, '');
+    // Expecting response starting with 41 + PID_BYTE (e.g. 410C1AF8)
+    const idx = hex.indexOf('41' + pid.substring(2));
+    if (idx === -1) return;
+    const dataHex = hex.substring(idx + 4);
+    const A = parseInt(dataHex.substring(0, 2), 16);
+    const B = dataHex.length >= 4 ? parseInt(dataHex.substring(2, 4), 16) : 0;
+    if (isNaN(A)) return;
+
+    switch (pid) {
+      case '010C': state.rpm = ((A * 256) + B) / 4; break;
+      case '010D': state.speed = A; break;
+      case '0105': state.coolant = A - 40; break;
+      case '0142': state.volt = ((A * 256) + B) / 1000; break;
+      case '0111': state.throttle = Math.round((A * 100) / 255); break;
+      case '0104': state.load = Math.round((A * 100) / 255); break;
+      case '010F': state.iat = A - 40; break;
+      case '010B': state.map = A; break;
+      case '012F': state.fuelLvl = Math.round((A * 100) / 255); break;
+    }
+  };
+
+  // DTC Scan & Clear
+  function openDtcModal() { document.getElementById('dtcModal').classList.add('open'); }
+  function closeDtcModal() { document.getElementById('dtcModal').classList.remove('open'); }
+  function scanDtc() {
+    const box = document.getElementById('dtcResultBox');
+    if (state.isRealObd && window.AndroidOBD) {
+      const res = window.AndroidOBD.readDtcCodes();
+      box.innerHTML = '<b>Respon ECU Raw:</b> ' + (res || 'Tidak ada kode error tersimpan (0 DTC).');
+    } else {
+      box.innerHTML = '<span style="color:#00E676;font-weight:700;">✔ STATUS ECU OK (0 DTC)</span><br>Tidak ditemukan kode kerusakan mesin pada sistem.';
+    }
+  }
+  function clearDtc() {
+    const box = document.getElementById('dtcResultBox');
+    if (state.isRealObd && window.AndroidOBD) {
+      window.AndroidOBD.clearDtcCodes();
+    }
+    box.innerHTML = '<span style="color:#00E5FF;font-weight:700;">✔ Perintah Reset DTC (Mode 04) telah dikirim ke ECU.</span>';
+  }
+</script>
+</body>
+</html>
