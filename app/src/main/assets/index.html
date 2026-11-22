@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AutoDrive OS — Head Unit & OBD-II</title>
+<title>AutoDrive OS — Head Unit, OBD-II & Google Maps</title>
 <style>
   :root {
     --bg-dark: #06090F;
@@ -31,27 +31,27 @@
 
   /* Top Status Bar */
   .topbar {
-    height: 46px;
+    height: 44px;
     background: #090E17;
     border-bottom: 1px solid var(--panel-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 14px;
     flex-shrink: 0;
   }
-  .brand { font-weight: 800; font-size: 16px; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-  .status-pills { display: flex; align-items: center; gap: 10px; }
+  .brand { font-weight: 800; font-size: 15px; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .status-pills { display: flex; align-items: center; gap: 8px; }
   .pill {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
-    padding: 5px 12px;
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     cursor: pointer;
   }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
@@ -67,26 +67,26 @@
 
   /* Left Navigation Dock */
   .nav-dock {
-    width: 78px;
+    width: 76px;
     background: #080C14;
     border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 10px 8px;
+    padding: 8px 6px;
     flex-shrink: 0;
   }
   .nav-btn {
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
-    border-radius: 14px;
-    padding: 12px 4px;
+    border-radius: 12px;
+    padding: 10px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
+    gap: 3px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
     transition: 0.15s;
@@ -96,24 +96,24 @@
     border-color: var(--accent);
     color: var(--accent);
   }
-  .nav-icon { font-size: 20px; }
+  .nav-icon { font-size: 19px; }
 
   /* Content Screens */
   .screen {
     flex: 1;
     display: none;
-    padding: 12px;
-    gap: 12px;
+    padding: 10px;
+    gap: 10px;
     overflow: hidden;
   }
   .screen.active { display: flex; }
 
   /* Split Dashboard Layout */
   .left-telemetry {
-    flex: 1.25;
+    flex: 1.22;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   .right-media {
     flex: 1;
@@ -129,87 +129,89 @@
   .gauges-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    flex: 1.35;
+    gap: 8px;
+    flex: 1.3;
   }
   .gauge-card {
     background: radial-gradient(circle at center, #111A2B 0%, #0A0F1A 100%);
     border: 1px solid var(--panel-border);
-    border-radius: 16px;
+    border-radius: 14px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    padding: 6px;
   }
-  .gauge-title { position: absolute; top: 10px; left: 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; }
-  .gauge-val { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; color: #fff; text-shadow: 0 0 16px var(--accent-glow); }
-  .gauge-unit { font-size: 12px; color: var(--accent); font-weight: 700; margin-top: 4px; }
-  .bar-track { width: 85%; height: 10px; background: #162033; border-radius: 6px; overflow: hidden; margin-top: 12px; }
+  .gauge-title { position: absolute; top: 8px; left: 12px; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; }
+  .gauge-val { font-size: 42px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; color: #fff; text-shadow: 0 0 16px var(--accent-glow); }
+  .gauge-unit { font-size: 11px; color: var(--accent); font-weight: 700; margin-top: 3px; }
+  .bar-track { width: 85%; height: 9px; background: #162033; border-radius: 6px; overflow: hidden; margin-top: 10px; }
   .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00E5FF, #00E676, #FF9100, #FF1744); transition: width 0.12s linear; }
 
   /* Odometer & Trip Strip */
   .odo-strip {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
-    border-radius: 14px;
-    padding: 10px 14px;
+    border-radius: 12px;
+    padding: 8px 12px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 6px;
     align-items: center;
   }
   .odo-item { display: flex; flex-direction: column; }
-  .odo-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
-  .odo-num { font-size: 16px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .odo-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+  .odo-num { font-size: 15px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
-  /* Sensors Grid (Coolant, Battery, Throttle, Load, IAT, MAP) */
+  /* Sensors Grid */
   .sensors-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 7px;
     flex: 1;
   }
   .sensor-box {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
-    border-radius: 12px;
-    padding: 8px 10px;
+    border-radius: 11px;
+    padding: 7px 9px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
-  .s-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); font-weight: 700; }
-  .s-val { font-size: 20px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
-  .s-sub { font-size: 10px; color: var(--ok); }
+  .s-head { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); font-weight: 700; }
+  .s-val { font-size: 18px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .s-sub { font-size: 9px; color: var(--ok); }
 
   /* Simulator Bar */
   .sim-bar {
     background: #0B1220;
     border: 1px solid var(--panel-border);
-    border-radius: 12px;
-    padding: 8px 12px;
+    border-radius: 11px;
+    padding: 6px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
   }
   .btn {
     background: #162238;
     border: 1px solid #263859;
     color: #fff;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
   }
   .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn.green { background: #00E676; color: #000; border-color: #00E676; }
   .btn.danger { background: rgba(255, 23, 68, 0.2); border-color: var(--danger); color: #FF5252; }
-  input[type=range] { flex: 1; accent-color: var(--accent); height: 24px; }
+  input[type=range] { flex: 1; accent-color: var(--accent); height: 22px; }
 
-  /* Media Tabs & Player */
+  /* Media & Maps Tabs */
   .media-tabs {
     display: flex;
     background: #080D17;
@@ -217,25 +219,26 @@
   }
   .m-tab {
     flex: 1;
-    padding: 11px;
+    padding: 10px 4px;
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-muted);
     cursor: pointer;
     border-bottom: 2px solid transparent;
   }
   .m-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,229,255,0.06); }
-  .media-body { flex: 1; display: flex; flex-direction: column; padding: 10px; gap: 8px; overflow: hidden; }
+  .media-body { flex: 1; display: flex; flex-direction: column; padding: 8px; gap: 7px; overflow: hidden; }
   .yt-input-row { display: flex; gap: 6px; }
   .yt-input {
     flex: 1;
     background: #06090F;
     border: 1px solid var(--panel-border);
     color: #fff;
-    padding: 8px 10px;
+    padding: 7px 10px;
     border-radius: 8px;
     font-size: 12px;
+    min-width: 0;
   }
   .player-frame {
     flex: 1;
@@ -248,16 +251,29 @@
     justify-content: center;
   }
   iframe, video { width: 100%; height: 100%; border: none; object-fit: contain; }
-  .quick-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .quick-chips { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex-shrink: 0; }
   .chip {
     background: #141E30;
     border: 1px solid #223250;
     color: #CBD5E1;
-    padding: 5px 10px;
+    padding: 4px 9px;
     border-radius: 14px;
-    font-size: 11px;
+    font-size: 10px;
     white-space: nowrap;
     cursor: pointer;
+  }
+  .gps-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(6, 9, 15, 0.88);
+    border: 1px solid var(--accent);
+    color: #fff;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Modal Bluetooth & DTC */
@@ -298,14 +314,18 @@
 
   <!-- Top Bar -->
   <div class="topbar">
-    <div class="brand">⚡ AUTODRIVE OS <span style="font-size:11px;color:#7B8FA6;font-weight:600;">HEAD UNIT OBD-II</span></div>
+    <div class="brand">⚡ AUTODRIVE OS <span style="font-size:10px;color:#7B8FA6;font-weight:600;">HEAD UNIT • OBD-II • MAPS</span></div>
     <div class="status-pills">
+      <div class="pill" onclick="centerMyGps()" title="Klik untuk sinkronisasi GPS">
+        <span class="dot" id="gpsDot"></span>
+        <span id="gpsStatusText">GPS: MENCARI...</span>
+      </div>
       <div class="pill" onclick="openBtModal()">
         <span class="dot" id="obdDot"></span>
-        <span id="obdStatusText">OBD: SIMULASI (KLIK KONEK BT)</span>
+        <span id="obdStatusText">OBD: SIMULASI</span>
       </div>
-      <div class="pill" onclick="openDtcModal()">🛠️ DTC SCAN</div>
-      <div class="clock" id="clockDisplay">20:45</div>
+      <div class="pill" onclick="openDtcModal()">🛠️ DTC</div>
+      <div class="clock" id="clockDisplay">21:50</div>
     </div>
   </div>
 
@@ -313,15 +333,16 @@
   <div class="workspace">
     <!-- Left Nav Dock -->
     <div class="nav-dock">
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="nav-btn active" onclick="switchScreen('dash', this)"><span class="nav-icon">🏎️</span>COCKPIT</button>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="nav-btn active" id="navDashBtn" onclick="switchScreen('dash', this)"><span class="nav-icon">🏎️</span>COCKPIT</button>
+        <button class="nav-btn" onclick="openFullMap()"><span class="nav-icon">🗺️</span>MAPS FULL</button>
         <button class="nav-btn" onclick="switchScreen('allpids', this)"><span class="nav-icon">📊</span>SEMUA PID</button>
         <button class="nav-btn" onclick="switchScreen('mediafull', this)"><span class="nav-icon">🎬</span>HIBURAN</button>
       </div>
       <button class="nav-btn" onclick="resetTrip()"><span class="nav-icon">🔄</span>RESET TRIP</button>
     </div>
 
-    <!-- SCREEN 1: MAIN COCKPIT (OBD + MEDIA SPLIT) -->
+    <!-- SCREEN 1: MAIN COCKPIT (OBD + MAPS/MEDIA SPLIT) -->
     <div class="screen active" id="screen-dash">
       <div class="left-telemetry">
         <!-- Speed & RPM -->
@@ -329,7 +350,7 @@
           <div class="gauge-card">
             <span class="gauge-title">SPEEDOMETER (PID 010D)</span>
             <div class="gauge-val" id="valSpeed">0</div>
-            <div class="gauge-unit">KM / H</div>
+            <div class="gauge-unit" id="speedSourceUnit">KM / H</div>
             <div class="bar-track"><div class="bar-fill" id="barSpeed"></div></div>
           </div>
           <div class="gauge-card">
@@ -398,31 +419,53 @@
             <div class="s-sub">IGNITION</div>
           </div>
           <div class="sensor-box">
-            <div class="s-head"><span>SHORT FUEL TRIM</span><span>0106</span></div>
-            <div class="s-val" id="valStft">+1.5 %</div>
-            <div class="s-sub">BANK 1</div>
+            <div class="s-head"><span>GPS SPEED</span><span>SAT</span></div>
+            <div class="s-val" id="valGpsSpeed">0 km/h</div>
+            <div class="s-sub" id="valGpsAcc">AKURASI -- m</div>
           </div>
         </div>
 
-        <!-- Interactive Simulator Controls (Active when BT not connected) -->
+        <!-- Interactive Simulator Controls -->
         <div class="sim-bar" id="simBar">
           <button class="btn primary" id="btnEngine" onclick="toggleEngine()">⚡ MESIN: ON</button>
-          <span style="font-size:11px;color:#7B8FA6;font-weight:700;">GAS SIMULASI:</span>
+          <span style="font-size:10px;color:#7B8FA6;font-weight:700;">GAS:</span>
           <input type="range" id="gasPedal" min="0" max="100" value="0" oninput="onGasInput(this.value)">
           <button class="btn" onclick="setCruise()">CRUISE 80</button>
         </div>
       </div>
 
-      <!-- Right Side: Integrated YouTube / Music / Video Player -->
+      <!-- Right Side: Lightweight Google Maps + YouTube / Music / Video -->
       <div class="right-media" id="mediaContainer">
         <div class="media-tabs">
-          <div class="m-tab active" onclick="switchMediaTab('yt', this)">▶️ YOUTUBE</div>
-          <div class="m-tab" onclick="switchMediaTab('music', this)">🎵 MUSIK LOKAL</div>
-          <div class="m-tab" onclick="switchMediaTab('video', this)">🎞️ VIDEO MP4</div>
+          <div class="m-tab active" id="tabBtnMaps" onclick="switchMediaTab('maps', this)">🗺️ MAPS</div>
+          <div class="m-tab" id="tabBtnYt" onclick="switchMediaTab('yt', this)">▶️ YOUTUBE</div>
+          <div class="m-tab" id="tabBtnMusic" onclick="switchMediaTab('music', this)">🎵 MUSIK</div>
+          <div class="m-tab" id="tabBtnVideo" onclick="switchMediaTab('video', this)">🎞️ VIDEO</div>
+        </div>
+
+        <!-- Google Maps Tab (Lightweight Embed + Native Turn-by-Turn Launch) -->
+        <div class="media-body" id="tab-maps">
+          <div class="yt-input-row">
+            <input type="text" class="yt-input" id="mapSearchInput" placeholder="Cari tujuan, SPBU, Bengkel, Tol..." onkeydown="if(event.key==='Enter') searchGoogleMaps()">
+            <button class="btn primary" onclick="searchGoogleMaps()">CARI</button>
+            <button class="btn green" onclick="startTurnByTurnNav()" title="Buka Navigasi Suara Turn-by-Turn">🧭 RUTE</button>
+          </div>
+          <div class="quick-chips">
+            <span class="chip" onclick="centerMyGps()">📍 Lokasi Saya</span>
+            <span class="chip" onclick="quickMapPoi('SPBU Pertamina terdekat')">⛽ SPBU</span>
+            <span class="chip" onclick="quickMapPoi('Bengkel Mobil terdekat')">🔧 Bengkel</span>
+            <span class="chip" onclick="quickMapPoi('Rest Area Tol terdekat')">☕ Rest Area</span>
+            <span class="chip" onclick="quickMapPoi('Masjid terdekat')">🕌 Masjid</span>
+            <span class="chip" onclick="toggleMapLayer()">🛰️ Satelit/Peta</span>
+          </div>
+          <div class="player-frame">
+            <iframe id="gmapsFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=-6.2088,106.8456&z=15&output=embed"></iframe>
+            <div class="gps-badge" id="gpsCoordBadge">GPS: Menunggu sinyal satelit...</div>
+          </div>
         </div>
 
         <!-- YouTube Tab -->
-        <div class="media-body" id="tab-yt">
+        <div class="media-body" id="tab-yt" style="display:none;">
           <div class="yt-input-row">
             <input type="text" class="yt-input" id="ytUrlInput" placeholder="Tempel Link YouTube / ID Video...">
             <button class="btn primary" onclick="loadYoutube()">PUTAR</button>
@@ -433,27 +476,27 @@
             <span class="chip" onclick="playYtId('5qap5aO4i9A')">🚗 Chill Car Mix</span>
           </div>
           <div class="player-frame">
-            <iframe id="ytFrame" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+            <iframe id="ytFrame" loading="lazy" src="about:blank" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
           </div>
         </div>
 
         <!-- Local Music Tab -->
         <div class="media-body" id="tab-music" style="display:none;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:700;" id="musicTitle">Pilih File MP3 / Audio Headunit</span>
+            <span style="font-size:11px;font-weight:700;" id="musicTitle">Pilih File MP3 / Audio Headunit</span>
             <label class="btn primary" style="cursor:pointer;">
               📂 BUKA MP3
               <input type="file" accept="audio/*" multiple style="display:none;" onchange="loadLocalAudio(this.files)">
             </label>
           </div>
-          <audio id="audioPlayer" controls style="width:100%;margin-top:6px;"></audio>
-          <div id="audioPlaylist" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-top:6px;"></div>
+          <audio id="audioPlayer" controls style="width:100%;margin-top:4px;"></audio>
+          <div id="audioPlaylist" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-top:4px;"></div>
         </div>
 
         <!-- Local Video Tab -->
         <div class="media-body" id="tab-video" style="display:none;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:12px;font-weight:700;" id="videoTitle">Pemutar Video MP4 / MKV</span>
+            <span style="font-size:11px;font-weight:700;" id="videoTitle">Pemutar Video MP4 / MKV</span>
             <label class="btn primary" style="cursor:pointer;">
               📂 BUKA VIDEO
               <input type="file" accept="video/*" style="display:none;" onchange="loadLocalVideo(this.files)">
@@ -468,15 +511,15 @@
 
     <!-- SCREEN 2: ALL OBD-II PIDS TABLE -->
     <div class="screen" id="screen-allpids" style="flex-direction:column;overflow-y:auto;">
-      <h3 style="color:var(--accent);font-size:15px;">DAFTAR LENGKAP PARAMETER TELEMETRI OBD-II (MODE 01 LIVE DATA)</h3>
+      <h3 style="color:var(--accent);font-size:14px;">DAFTAR LENGKAP PARAMETER TELEMETRI OBD-II & GPS (MODE 01 LIVE DATA)</h3>
       <div class="sensors-grid" style="grid-template-columns:repeat(4,1fr);flex:unset;" id="allPidsGrid"></div>
     </div>
 
-    <!-- SCREEN 3: FULLSCREEN MEDIA MODE -->
+    <!-- SCREEN 3: FULLSCREEN MAPS / MEDIA MODE -->
     <div class="screen" id="screen-mediafull" style="flex-direction:column;">
-      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-bg);padding:8px 14px;border-radius:12px;border:1px solid var(--panel-border);">
-        <span style="font-size:13px;font-weight:700;color:var(--accent);">MINI TELEMETRI: <span id="miniSpeed" style="color:#fff;">0 km/h</span> | <span id="miniRpm" style="color:#fff;">820 RPM</span> | <span id="miniCoolant" style="color:#00E676;">88°C</span> | <span id="miniVolt" style="color:#00E676;">14.1V</span></span>
-        <button class="btn primary" onclick="switchScreen('dash', document.querySelector('.nav-btn'))">KEMBALI KE COCKPIT</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-bg);padding:6px 12px;border-radius:11px;border:1px solid var(--panel-border);">
+        <span style="font-size:12px;font-weight:700;color:var(--accent);">MINI TELEMETRI: <span id="miniSpeed" style="color:#fff;">0 km/h</span> | <span id="miniRpm" style="color:#fff;">820 RPM</span> | <span id="miniCoolant" style="color:#00E676;">88°C</span> | <span id="miniVolt" style="color:#00E676;">14.1V</span></span>
+        <button class="btn primary" onclick="switchScreen('dash', document.getElementById('navDashBtn'))">KEMBALI KE COCKPIT</button>
       </div>
       <div id="fullMediaSlot" style="flex:1;display:flex;"></div>
     </div>
@@ -486,10 +529,10 @@
   <div class="modal-backdrop" id="btModal">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="color:var(--accent);font-size:16px;">🔌 KONEKSI ADAPTER OBD-II (ELM327)</h3>
+        <h3 style="color:var(--accent);font-size:15px;">🔌 KONEKSI ADAPTER OBD-II (ELM327)</h3>
         <button class="btn danger" onclick="closeBtModal()">TUTUP</button>
       </div>
-      <p style="font-size:12px;color:var(--text-muted);">Pastikan Bluetooth Headunit aktif dan sudah <b>Pair (Sandingkan)</b> dengan <b>OBDII / ELM327</b> (PIN biasanya 1234 atau 0000) di Pengaturan Android.</p>
+      <p style="font-size:12px;color:var(--text-muted);">Pastikan Bluetooth Headunit aktif dan sudah <b>Pair (Sandingkan)</b> dengan <b>OBDII / ELM327</b> (PIN 1234 atau 0000) di Pengaturan Android.</p>
       <div class="dev-list" id="btDeviceList">
         <div style="font-size:12px;color:#7B8FA6;">Memuat perangkat Bluetooth...</div>
       </div>
@@ -504,7 +547,7 @@
   <div class="modal-backdrop" id="dtcModal">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="color:var(--warn);font-size:16px;">🛠️ DIAGNOSTIK CHECK ENGINE (DTC MODE 03 / 04)</h3>
+        <h3 style="color:var(--warn);font-size:15px;">🛠️ DIAGNOSTIK CHECK ENGINE (DTC MODE 03 / 04)</h3>
         <button class="btn danger" onclick="closeDtcModal()">TUTUP</button>
       </div>
       <div id="dtcResultBox" style="background:#06090F;padding:12px;border-radius:10px;border:1px solid var(--panel-border);font-size:13px;min-height:80px;">
@@ -518,7 +561,6 @@
   </div>
 
 <script>
-  // State Telemetry
   const state = {
     isRealObd: false,
     engineOn: true,
@@ -536,15 +578,136 @@
     ltft: 0.8,
     fuelLvl: 72,
     odo: 124580.4,
-    trip: 18.4
+    trip: 18.4,
+    // High-accuracy GPS state
+    lat: -6.2088,
+    lng: 106.8456,
+    gpsAcc: 0,
+    gpsSpeed: 0,
+    hasGpsFix: false,
+    mapType: 'm', // 'm' = roadmap (lightweight), 'k' = satellite
+    lastMapQuery: ''
   };
+
+  let ytInitialized = false;
 
   // Clock
   setInterval(() => {
     const now = new Date();
-    document.getElementById('clockDisplay').textContent =
-      now.toTimeString().slice(0, 5);
+    document.getElementById('clockDisplay').textContent = now.toTimeString().slice(0, 5);
   }, 1000);
+
+  // Initialize GPS from Native Bridge or Web Geolocation
+  function initGps() {
+    if (window.AndroidOBD && window.AndroidOBD.getLastLocationJson) {
+      try {
+        const data = JSON.parse(window.AndroidOBD.getLastLocationJson());
+        if (data.hasFix) {
+          applyGpsFix(data.lat, data.lng, data.acc, data.gpsSpeed, true);
+        }
+      } catch (e) {}
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        pos => {
+          const spd = pos.coords.speed ? (pos.coords.speed * 3.6) : state.gpsSpeed;
+          applyGpsFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, spd, !state.lastMapQuery);
+        },
+        err => {
+          if (!state.hasGpsFix) {
+            document.getElementById('gpsStatusText').textContent = 'GPS: AKTIFKAN LOKASI';
+          }
+        },
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+      );
+    }
+  }
+
+  window.onNativeGpsUpdate = function(jsonStr) {
+    try {
+      const d = JSON.parse(jsonStr);
+      const shouldRecenter = !state.hasGpsFix;
+      applyGpsFix(d.lat, d.lng, d.acc, d.gpsSpeed, shouldRecenter);
+    } catch (e) {}
+  };
+
+  function applyGpsFix(lat, lng, acc, gpsSpeed, recenterMap) {
+    state.lat = lat;
+    state.lng = lng;
+    state.gpsAcc = Math.round(acc || 0);
+    state.gpsSpeed = Math.round(gpsSpeed || 0);
+    state.hasGpsFix = true;
+
+    document.getElementById('gpsDot').classList.add('online');
+    document.getElementById('gpsStatusText').textContent = `GPS: ±${state.gpsAcc}m`;
+    document.getElementById('valGpsSpeed').textContent = state.gpsSpeed + ' km/h';
+    document.getElementById('valGpsAcc').textContent = `AKURASI ±${state.gpsAcc} m`;
+    document.getElementById('gpsCoordBadge').textContent =
+      `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${state.gpsAcc}m)`;
+
+    if (recenterMap && !state.lastMapQuery) {
+      updateGoogleMapEmbed(`${lat},${lng}`, 16);
+    }
+  }
+
+  function updateGoogleMapEmbed(query, zoom) {
+    const z = zoom || 15;
+    const encoded = encodeURIComponent(query);
+    document.getElementById('gmapsFrame').src =
+      `https://maps.google.com/maps?q=${encoded}&t=${state.mapType}&z=${z}&hl=id&output=embed`;
+  }
+
+  function centerMyGps() {
+    state.lastMapQuery = '';
+    document.getElementById('mapSearchInput').value = '';
+    updateGoogleMapEmbed(`${state.lat},${state.lng}`, 16);
+  }
+
+  function searchGoogleMaps() {
+    const q = document.getElementById('mapSearchInput').value.trim();
+    if (!q) {
+      centerMyGps();
+      return;
+    }
+    state.lastMapQuery = q;
+    // Bias search near current accurate GPS coordinates
+    const queryWithBias = state.hasGpsFix ? `${q} dekat ${state.lat},${state.lng}` : q;
+    updateGoogleMapEmbed(queryWithBias, 14);
+  }
+
+  function quickMapPoi(poi) {
+    document.getElementById('mapSearchInput').value = poi;
+    state.lastMapQuery = poi;
+    const q = state.hasGpsFix ? `${poi} @${state.lat},${state.lng}` : poi;
+    updateGoogleMapEmbed(q, 14);
+  }
+
+  function toggleMapLayer() {
+    state.mapType = (state.mapType === 'm') ? 'k' : 'm';
+    if (state.lastMapQuery) {
+      searchGoogleMaps();
+    } else {
+      centerMyGps();
+    }
+  }
+
+  function startTurnByTurnNav() {
+    const dest = document.getElementById('mapSearchInput').value.trim() || state.lastMapQuery;
+    if (!dest) {
+      alert('Ketik tujuan terlebih dahulu pada kolom pencarian Maps untuk memulai navigasi suara.');
+      return;
+    }
+    if (window.AndroidOBD && window.AndroidOBD.openTurnByTurnNavigation) {
+      window.AndroidOBD.openTurnByTurnNavigation(dest);
+    } else {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`, '_blank');
+    }
+  }
+
+  function openFullMap() {
+    switchScreen('mediafull', null);
+    switchMediaTab('maps', document.getElementById('tabBtnMaps'));
+  }
 
   // Navigation Screen Switcher
   function switchScreen(name, btn) {
@@ -564,10 +727,15 @@
 
   function switchMediaTab(tab, el) {
     document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    ['yt', 'music', 'video'].forEach(id => {
+    if (el) el.classList.add('active');
+    ['maps', 'yt', 'music', 'video'].forEach(id => {
       document.getElementById('tab-' + id).style.display = (id === tab) ? 'flex' : 'none';
     });
+    // Lazy-load YouTube iframe only when user opens YouTube tab to keep Maps ultra-fast
+    if (tab === 'yt' && !ytInitialized) {
+      ytInitialized = true;
+      document.getElementById('ytFrame').src = 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&rel=0';
+    }
   }
 
   // YouTube Player
@@ -582,6 +750,7 @@
     playYtId(extractYtId(val));
   }
   function playYtId(id) {
+    ytInitialized = true;
     document.getElementById('ytFrame').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
   }
 
@@ -617,7 +786,7 @@
     document.getElementById('videoTitle').textContent = file.name;
   }
 
-  // Simulator Physics Loop (runs only when real OBD-II is not connected)
+  // Simulator Physics Loop
   function toggleEngine() {
     state.engineOn = !state.engineOn;
     document.getElementById('btnEngine').textContent = state.engineOn ? '⚡ MESIN: ON' : '⭕ MESIN: ACC';
@@ -652,9 +821,9 @@
       }
     }
 
-    // Distance integration (km)
+    const effectiveSpeed = (state.isRealObd && state.speed > 0) ? state.speed : (state.hasGpsFix && state.gpsSpeed > 2 ? state.gpsSpeed : state.speed);
     const dtHours = 0.15 / 3600;
-    const dist = Math.max(0, state.speed) * dtHours;
+    const dist = Math.max(0, effectiveSpeed) * dtHours;
     state.odo += dist;
     state.trip += dist;
 
@@ -684,13 +853,11 @@
     document.getElementById('valTiming').textContent = state.timing + '°';
     document.getElementById('valFuelLvl').textContent = state.fuelLvl + ' %';
 
-    // Mini Telemetry in Full Media Mode
     document.getElementById('miniSpeed').textContent = spd + ' km/h';
     document.getElementById('miniRpm').textContent = rpm + ' RPM';
     document.getElementById('miniCoolant').textContent = cool + '°C';
     document.getElementById('miniVolt').textContent = volt + 'V';
 
-    // Alerts
     const cStatus = document.getElementById('statusCoolant');
     if (cool > 103) { cStatus.textContent = 'OVERHEAT!'; cStatus.style.color = '#FF1744'; }
     else { cStatus.textContent = 'NORMAL'; cStatus.style.color = '#00E676'; }
@@ -703,7 +870,9 @@
   function renderAllPids() {
     const items = [
       ['010C', 'Engine RPM', Math.round(state.rpm) + ' RPM'],
-      ['010D', 'Vehicle Speed', Math.round(state.speed) + ' km/h'],
+      ['010D', 'Vehicle Speed (ECU)', Math.round(state.speed) + ' km/h'],
+      ['GPS', 'Vehicle Speed (Satelit)', state.gpsSpeed + ' km/h'],
+      ['LOC', 'Koordinat GPS', `${state.lat.toFixed(4)}, ${state.lng.toFixed(4)}`],
       ['0105', 'Coolant Temp', Math.round(state.coolant) + ' °C'],
       ['0142', 'Control Module Voltage', Number(state.volt).toFixed(1) + ' V'],
       ['0111', 'Throttle Position', state.throttle + ' %'],
@@ -711,15 +880,13 @@
       ['010F', 'Intake Air Temp (IAT)', state.iat + ' °C'],
       ['010B', 'Intake Manifold Pressure', state.map + ' kPa'],
       ['010E', 'Timing Advance', state.timing + ' °'],
-      ['0106', 'Short Term Fuel Trim B1', '+' + state.stft + ' %'],
-      ['0107', 'Long Term Fuel Trim B1', '+' + state.ltft + ' %'],
       ['012F', 'Fuel Tank Level Input', state.fuelLvl + ' %']
     ];
     document.getElementById('allPidsGrid').innerHTML = items.map(i => `
       <div class="sensor-box">
         <div class="s-head"><span>${i[1]}</span><span>${i[0]}</span></div>
         <div class="s-val">${i[2]}</div>
-        <div class="s-sub">SAE J1979 STANDARD</div>
+        <div class="s-sub">LIVE TELEMETRY</div>
       </div>
     `).join('');
   }
@@ -772,31 +939,29 @@
   window.onObdConnected = function(name) {
     state.isRealObd = true;
     document.getElementById('obdDot').classList.add('online');
-    document.getElementById('obdStatusText').textContent = 'OBD TERHUBUNG: ' + name;
+    document.getElementById('obdStatusText').textContent = 'OBD: ' + name;
     document.getElementById('simBar').style.display = 'none';
   };
 
   window.onObdDisconnected = function() {
     state.isRealObd = false;
     document.getElementById('obdDot').classList.remove('online');
-    document.getElementById('obdStatusText').textContent = 'OBD TERPUTUS (SIMULASI)';
+    document.getElementById('obdStatusText').textContent = 'OBD: TERPUTUS';
     document.getElementById('simBar').style.display = 'flex';
   };
 
   window.onObdError = function(msg) {
     state.isRealObd = false;
     document.getElementById('obdDot').classList.remove('online');
-    document.getElementById('obdStatusText').textContent = 'OBD ERROR: ' + msg;
+    document.getElementById('obdStatusText').textContent = 'OBD ERR';
     document.getElementById('simBar').style.display = 'flex';
   };
 
-  // Parse Real Hexadecimal ELM327 Responses
   window.onObdPidData = function(payload) {
     const parts = payload.split('|');
     if (parts.length < 2) return;
     const pid = parts[0];
     const hex = parts[1].replace(/\s+/g, '');
-    // Expecting response starting with 41 + PID_BYTE (e.g. 410C1AF8)
     const idx = hex.indexOf('41' + pid.substring(2));
     if (idx === -1) return;
     const dataHex = hex.substring(idx + 4);
@@ -817,7 +982,6 @@
     }
   };
 
-  // DTC Scan & Clear
   function openDtcModal() { document.getElementById('dtcModal').classList.add('open'); }
   function closeDtcModal() { document.getElementById('dtcModal').classList.remove('open'); }
   function scanDtc() {
@@ -836,6 +1000,9 @@
     }
     box.innerHTML = '<span style="color:#00E5FF;font-weight:700;">✔ Perintah Reset DTC (Mode 04) telah dikirim ke ECU.</span>';
   }
+
+  // Start GPS on load
+  initGps();
 </script>
 </body>
 </html>

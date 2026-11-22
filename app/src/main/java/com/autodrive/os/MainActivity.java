@@ -6,8 +6,12 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,13 +19,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -56,6 +60,37 @@ public class MainActivity extends AppCompatActivity {
     private Thread pollingThread;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // Native High-Accuracy GPS Location Manager
+    private LocationManager locationManager;
+    private double lastLat = -6.2088; // Default Jakarta fallback before first GPS fix
+    private double lastLng = 106.8456;
+    private float lastAccuracy = 0f;
+    private float lastBearing = 0f;
+    private float lastSpeedKmh = 0f;
+    private boolean hasGpsFix = false;
+
+    private final LocationListener gpsListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(@NonNull Location loc) {
+            lastLat = loc.getLatitude();
+            lastLng = loc.getLongitude();
+            lastAccuracy = loc.getAccuracy();
+            lastBearing = loc.getBearing();
+            lastSpeedKmh = loc.hasSpeed() ? (loc.getSpeed() * 3.6f) : 0f;
+            hasGpsFix = true;
+
+            String json = String.format(java.util.Locale.US,
+                    "{"lat":%.6f,"lng":%.6f,"acc":%.1f,"bearing":%.1f,"gpsSpeed":%.1f}",
+                    lastLat, lastLng, lastAccuracy, lastBearing, lastSpeedKmh);
+            sendJsEvent("onNativeGpsUpdate", json);
+        }
+
+        @Override
+        public void onProviderEnabled(@NonNull String provider) {}
+        @Override
+        public void onProviderDisabled(@NonNull String provider) {}
+    };
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setGeolocationEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
@@ -76,8 +112,26 @@ public class MainActivity extends AppCompatActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.addJavascriptInterface(new AndroidObdBridge(), "AndroidOBD");
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url != null && (url.startsWith("google.navigation:") || url.startsWith("geo:") || url.startsWith("intent:"))) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception ignored) {}
+                }
+                return false;
+            }
+        });
+
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+            }
+
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 if (MainActivity.this.filePathCallback != null) {
@@ -96,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         requestRequiredPermissions();
+        startNativeGps();
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         webView.loadUrl("file:///android_asset/index.html");
     }
@@ -119,13 +174,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestRequiredPermissions() {
         List<String> perms = new ArrayList<>();
+        perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        perms.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             perms.add(Manifest.permission.BLUETOOTH_CONNECT);
             perms.add(Manifest.permission.BLUETOOTH_SCAN);
         } else {
             perms.add(Manifest.permission.BLUETOOTH);
             perms.add(Manifest.permission.BLUETOOTH_ADMIN);
-            perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             perms.add(Manifest.permission.READ_MEDIA_AUDIO);
@@ -142,6 +199,43 @@ public class MainActivity extends AppCompatActivity {
         }
         if (!needed.isEmpty()) {
             ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            startNativeGps();
+        }
+    }
+
+    private void startNativeGps() {
+        try {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            if (locationManager != null) {
+                Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (lastKnown == null) {
+                    lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                }
+                if (lastKnown != null) {
+                    lastLat = lastKnown.getLatitude();
+                    lastLng = lastKnown.getLongitude();
+                    lastAccuracy = lastKnown.getAccuracy();
+                    hasGpsFix = true;
+                }
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1.0f, gpsListener);
+                }
+                if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000L, 5.0f, gpsListener);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -167,6 +261,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class AndroidObdBridge {
+
+        @JavascriptInterface
+        public String getLastLocationJson() {
+            return String.format(java.util.Locale.US,
+                    "{"lat":%.6f,"lng":%.6f,"acc":%.1f,"bearing":%.1f,"gpsSpeed":%.1f,"hasFix":%b}",
+                    lastLat, lastLng, lastAccuracy, lastBearing, lastSpeedKmh, hasGpsFix);
+        }
+
+        @JavascriptInterface
+        public void openTurnByTurnNavigation(String destinationQuery) {
+            try {
+                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + Uri.encode(destinationQuery) + "&mode=d");
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                } else {
+                    // Fallback to browser Google Maps directions
+                    Uri webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + Uri.encode(destinationQuery) + "&travelmode=driving");
+                    startActivity(new Intent(Intent.ACTION_VIEW, webUri));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         @JavascriptInterface
         public String getPairedDevices() {
@@ -209,14 +328,13 @@ public class MainActivity extends AppCompatActivity {
                     btIn = btSocket.getInputStream();
                     btOut = btSocket.getOutputStream();
 
-                    // ELM327 Initialization AT Commands
                     sendAtCommand("ATZ");
                     Thread.sleep(500);
-                    sendAtCommand("ATE0"); // Echo Off
-                    sendAtCommand("ATL0"); // Linefeeds Off
-                    sendAtCommand("ATS0"); // Spaces Off
-                    sendAtCommand("ATH0"); // Headers Off
-                    sendAtCommand("ATSP0"); // Auto Protocol
+                    sendAtCommand("ATE0");
+                    sendAtCommand("ATL0");
+                    sendAtCommand("ATS0");
+                    sendAtCommand("ATH0");
+                    sendAtCommand("ATSP0");
 
                     isObdConnected = true;
                     sendJsEvent("onObdConnected", device.getName() != null ? device.getName() : macAddress);
@@ -318,6 +436,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         disconnectObd();
+        if (locationManager != null) {
+            locationManager.removeUpdates(gpsListener);
+        }
         super.onDestroy();
     }
 }
